@@ -14,92 +14,221 @@ app.use(express.json());
 
 const questions (): void  {
   inquirer
-  .prompt ([
+    .prompt([
 
-  {type: 'list',
-   name: 'choices',
-   message: 'What would you like to do?',
-   choices: ['View All Departments','View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee Role"]
+      {
+        type: 'list',
+        name: 'choices',
+        message: 'What would you like to do?',
+        choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee Role"]
 
-  }
+      }
 
-])
+    ])
 
-.then((answers): void => {
-  
-  if(answers.choices==='View All Departments') 
-    pool.query(`SELECT * FROM department`), (err: Error, result: QueryResult) => {
+    .then((answers): void => {
+
+      if (answers.choices === 'View All Departments') {
+        pool.query(`SELECT * FROM department`), (err: Error, result: QueryResult) => {
+          if (err) {
+            console.log(err);
+          }
+
+          else {
+            console.log(`${result.rows}`);
+
+          }
+        }
+    }
+
+    if (answers.choices === 'View All Roles') {
+    pool.query(`SELECT * FROM role`), (err: Error, result: QueryResult) => {
       if (err) {
         console.log(err);
       }
-        
-         else {
-        console.log(`${result}`);
-      
+
+      else {
+        console.log(`${result.rows}`);
+
+      }
     }
+
   }
-}
 
-    if(answers.choices==='View All Roles') {
-      pool.query(`SELECT * FROM role`), (err: Error, result: QueryResult) => {
-        if (err) {
-          console.log(err);
-        }
-          
-           else {
-          console.log(`${result}`);
-        
+  if (answers.choices === 'View All Employee') {
+    pool.query(`SELECT * FROM employee`), (err: Error, result: QueryResult) => {
+      if (err) {
+        console.log(err);
+      }
+
+      else {
+        console.log(`${result.rows}`);
+
       }
     }
 
-    }
+  }
 
-    if(answers.choices==='View All Employee') {
-      pool.query(`SELECT * FROM employee`), (err: Error, result: QueryResult) => {
-        if (err) {
-          console.log(err);
+
+  if (answers.choices === 'Add a Department') {
+
+    inquirer
+      .prompt([
+
+        {
+          type: 'input',
+          name: 'newDepartment',
+          message: 'Add Name of Department',
+
         }
-          
-           else {
-          console.log(`${result}`);
-        
+
+      ])
+
+
+    pool.query(`INSERT INTO department (id, name) VALUES $(answers.newDepartment`), (err: Error, result: QueryResult) => {
+      if (err) {
+        console.log(err);
+      }
+
+      else {
+        console.log(`${result.rows}`);
+
       }
     }
 
+  }
+
+
+  if (answers.choices === 'Add a Role') {
+
+    inquirer
+      .prompt([
+
+        {
+          type: 'input',
+          name: 'newRoleName',
+          message: 'Name of Role',
+
+        }
+
+
+
+        {
+
+          type: 'input',
+          name: 'salary',
+          message: 'Salary for Role',
+
+
+        }
+
+        {
+
+          type: 'input',
+          name: 'Department',
+          message: 'Department for Role',
+
+
+        }
+
+
+
+
+      ])
+
+
+    pool.query(`INSERT INTO role (id, name, salary, department) VALUES $(answers.newRoleName, answers.salary, answers.department`), (err: Error, result: QueryResult) => {
+      if (err) {
+        console.log(err);
+      }
+
+      else {
+        console.log(`${result.rows}`);
+
+      }
     }
 
-    
-    // if(answers.choices==='Add a Department') {
+  }
 
-    //   pool.query(`SELECT * FROM employee`), (err: Error, result: QueryResult) => {
-    //     if (err) {
-    //       console.log(err);
-    //     }
-          
-    //        else {
-    //       console.log(`${result}`);
-        
-    //   }
-    // }
 
-    // }
+  if (answers.choices === 'Add an') {
 
+    inquirer
+      .prompt([
+
+        {
+          type: 'input',
+          name: 'newRoleName',
+          message: 'Name of Role',
+
+        }
 
 
 
+        {
+
+          type: 'input',
+          name: 'salary',
+          message: 'Salary for Role',
+
+
+        }
+
+        {
+
+          type: 'input',
+          name: 'Department',
+          message: 'Department for Role',
+
+
+        }
+
+
+
+
+      ])
+
+
+    pool.query(`INSERT INTO department (id, name) VALUES $(answers.newDepartment`), (err: Error, result: QueryResult) => {
+      if (err) {
+        console.log(err);
+      }
+
+      else {
+        console.log(`${result.rows}`);
+
+      }
+    }
+
+  }
 
 
 
 
 
-      // });
+
+
 
 
 }
 
 
 
-  
+
+
+
+
+
+
+
+  // });
+
+
+}
+
+
+
+
 
 
 
