@@ -14,93 +14,122 @@ app.use(express.json());
 
 
 //create this function to use as depts as dynamic list
-async function departmentList () {
-  return new Promise((resolve, reject)=>{
-    pool.query('SELECT * FROM department', (err, results)=> {
-      if (err){
-        reject(err);
-      }
-      else {
-        resolve(results.rows);
-      }
-    });
-  });
+async function fetchDepartments () {
+  const result=await pool.query('SELECT * FROM department');
+  return result.rows;
 
   
 }
 
-//need to add role function to be able to add to dynamic list 
-async function employeeRole () {
-  return new Promise ((resolve, reject) => {
-    pool.query('SELECT * FROM roles', (err, results)=> {
-      if (err){
-        reject(err);
-      }
-      else {
-        resolve(results.rows);
-      }
-    })
-  })
+//need to add role function to be able to add to dynamic list to select role
+async function fetchRoles () {
+  const result=await pool.query ('SELECT * FROM roles');
+  return result.rows;
+  }
+
+  //creating function to pull up results from employee table
+  // async function fetchEmployees () {
+  //   const result=await pool.query ('SELECT * FROM employee');
+  //   return result.rows;
+  //   }
+
+//creating function to make allow for dynamic list for selecting Manager
+async function fetchManager () {
+   const result= await pool.query('SELECT manager_id FROM employee');
+   return result.rows; 
 }
 
-const questions (): void  {
+function handleError (err) {
+  console.error('Database query error', err);
+}
 
-  inquirer
-    .prompt([
+async function main() {}
+const {choices}=await inquirer.prompt([
 
       {
         type: 'list',
         name: 'choices',
         message: 'What would you like to do?',
-        choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee Role"]
+        choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee Role", "Quit"]
 
-      }
+      }, 
 
-    ])
+    ]);
 
-    .then((answers): void => {
+    
+    switch(choices) {
+//pulls up departments table
+      case 'View All Departments':
+      const departments= await fetchDepartments();
+      console.log(departments);
+      break;  
+    
 
-      if (answers.choices === 'View All Departments') {
-        pool.query(`SELECT * FROM department`), (err: Error, result: QueryResult) => {
-          if (err) {
-            console.log(err);
-          }
+    //pulls up all results from row table
+    case 'View All Roles':
+    const roles= await fetchRows();
+    console.log(roles);
+    break;  
 
-          else {
-            console.log(`${result.rows}`);
+    case 'View All Employee':
+      const employees=await pool.query('SELECT * FROM employee');
+      console.log(employees.rows);
+      break;
 
-          }
-        }
+      case 'Add a Department':
+      const { newDepartment }=await inquirer.prompt([
+        {
+        type: 'input', 
+        name: 'newDepartment', 
+        message: 'Add a Name of Department',
+        },
+      ]);
+
+      await pool.query('INSERT INTO department (name) VALUES ($1)', [newDepartment]);
+      console.log(`Department ${newDepartment} added.`);
+      break;
+      
+      case 'Add a Role':
+      const { newRoleName, salary, department }=await inquirer.prompt([
+        {
+        type: 'input', 
+        name: 'newRoleName', 
+        message: 'Name of New Role'
+        },
+
+        {
+          type: 'input', 
+          name: 'salary', 
+          message: 'Input Salary', 
+        },
+
+        {
+          type: 'list', 
+          name: 'department', 
+          message: 'Select Department for Role',
+          choices: (await fetchDepartments()).map(dept=> ({
+            name: dept.name,
+            value:dept.id, 
+
+          })),  
+        },
+
+      ]);
+
+      await pool.query('INSERT INTO roles (name, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salary, department]); 
+      console.log(`Role ${newRoleName} added`); 
+      break; 
+
+      
+  
     }
 
-    if (answers.choices === 'View All Roles') {
-    pool.query(`SELECT * FROM role`), (err: Error, result: QueryResult) => {
-      if (err) {
-        console.log(err);
-      }
 
-      else {
-        console.log(`${result.rows}`);
 
-      }
-    }
+  
 
-  }
-
-  //presents entire employee table
-  if (answers.choices === 'View All Employee') {
-    pool.query(`SELECT * FROM employee`), (err: Error, result: QueryResult) => {
-      if (err) {
-        console.log(err);
-      }
-
-      else {
-        console.log(`${result.rows}`);
-
-      }
-    }
-
-  }
+  
+  
 
 
   if (answers.choices === 'Add a Department') {
@@ -162,15 +191,15 @@ const questions (): void  {
         departmentList().then(department) => {
         {
 
-          type: 'input',
+          type: 'list',
           name: 'Department',
           message: 'Department for Role',
-          choices: departmentList.map(department)=> (
+          choices: department.map(department)=> {
             return {
-              name:department
-              value:id
+              name:department.name,
+              value:department.id,
             }
-          )
+        }
 
 
         }
@@ -180,7 +209,7 @@ const questions (): void  {
 
 
 
-      ])
+      
 
     }
 
@@ -198,7 +227,7 @@ const questions (): void  {
       }
     }
 
-  }
+  
 
     if (answers.choices === 'Add an Employee') {
 
@@ -225,24 +254,44 @@ const questions (): void  {
   
           
           
+          
+          employeeRole().then(roles) => {
+          
           {
   
-            type: 'input',
+            type: 'list',
             name: 'employeeRole',
             message: 'Employee Role',
-            
+            choices: roles.map(role)=> {
+              return {
+                name: role.name, 
+                value: role.id, 
+              };
+  
+              }
+            }
   
   
           }
 
+        }
+
+        employeeManager().then(managers)=> {
           {
   
-            type: 'input',
-            name: 'employeeManager',
+            type: 'list',
+            name: 'employeesManager',
             message: 'Employee Manager',
-  
+            choices: managers.map(manager)=> {
+              return {
+              name: manager.name, 
+              value: id,
+              }
+            }
   
           }
+
+        }
   
   
   
