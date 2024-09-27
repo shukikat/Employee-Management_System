@@ -67,7 +67,7 @@ const {choices}=await inquirer.prompt([
 
     //pulls up all results from row table
     case 'View All Roles':
-    const roles= await fetchRows();
+    const roles= await fetchRoles();
     console.log(roles);
     break;  
 
@@ -84,11 +84,12 @@ const {choices}=await inquirer.prompt([
         message: 'Add a Name of Department',
         },
       ]);
-
+     
       await pool.query('INSERT INTO department (name) VALUES ($1)', [newDepartment]);
       console.log(`Department ${newDepartment} added.`);
       break;
       
+      //logic to handle when user selects to add a new role
       case 'Add a Role':
       const { newRoleName, salary, department }=await inquirer.prompt([
         {
@@ -103,6 +104,7 @@ const {choices}=await inquirer.prompt([
           message: 'Input Salary', 
         },
 
+        // select from list of departments
         {
           type: 'list', 
           name: 'department', 
@@ -116,11 +118,59 @@ const {choices}=await inquirer.prompt([
 
       ]);
 
+      //updates roles table with new department 
       await pool.query('INSERT INTO roles (name, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salary, department]); 
       console.log(`Role ${newRoleName} added`); 
       break; 
 
-      
+      case 'Add an Employee':
+      const { firstName, lastName, employeeRole, employeeManager, salary }=await inquirer.prompt([
+
+        {
+          type: 'input',
+          name: 'firstName', 
+          message:'Enter Employee First Name',
+        },
+
+        {
+          type: 'input',
+          name: 'lastName', 
+          message:'Enter Employee Last Name',
+        },
+
+        {
+          type: 'list',
+          name: 'employeeRole', 
+          message:'Select Employee Role',
+          choices: (await fetchRoles()).map(role=>({
+            name: role.name,
+            value: role.id, 
+          })),
+        },
+
+        {
+          type:'list', 
+          name: 'employeeManager',
+          message: 'Select Employee Manager'
+          choices: (await fetchManagers()).map(manager=> ({
+            name: `${manager.first_name} ${manager.last_name}`, 
+            value: manager.id, 
+          })),
+        }, 
+
+        {
+          type: 'input',
+          name: 'empSalary', 
+          message:'Enter Employee Salary'
+        }, 
+
+      await pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id, salary) VALUES ($1, $2, $3, $4, $5)', [firstName, lastName, employeeRole, employeesManager, empSalary]); 
+      console.log(`Employee ${firstName}${lastName} added`); 
+      break; 
+
+      ])
+
+
   
     }
 
