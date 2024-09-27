@@ -12,13 +12,39 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
+
+//create this function to use as depts as dynamic list
 async function departmentList () {
-  return new Promise(resolve, reject)=>
+  return new Promise((resolve, reject)=>{
+    pool.query('SELECT * FROM department', (err, results)=> {
+      if (err){
+        reject(err);
+      }
+      else {
+        resolve(results.rows);
+      }
+    });
+  });
 
   
 }
 
+//need to add role function to be able to add to dynamic list 
+async function employeeRole () {
+  return new Promise ((resolve, reject) => {
+    pool.query('SELECT * FROM roles', (err, results)=> {
+      if (err){
+        reject(err);
+      }
+      else {
+        resolve(results.rows);
+      }
+    })
+  })
+}
+
 const questions (): void  {
+
   inquirer
     .prompt([
 
@@ -108,6 +134,8 @@ const questions (): void  {
 //updates row table
   if (answers.choices === 'Add a Role') {
 
+    
+
     inquirer
       .prompt([
 
@@ -130,19 +158,33 @@ const questions (): void  {
         }
 
         //this needs to be a list of choices from department table
+
+        departmentList().then(department) => {
         {
 
           type: 'input',
           name: 'Department',
           message: 'Department for Role',
+          choices: departmentList.map(department)=> (
+            return {
+              name:department
+              value:id
+            }
+          )
 
 
         }
+
+      }
 
 
 
 
       ])
+
+    }
+
+    
 
 
     pool.query(`INSERT INTO role (id, name, salary, department) VALUES $(answers.newRoleName, answers.salary, answers.department`), (err: Error, result: QueryResult) => {
@@ -181,11 +223,14 @@ const questions (): void  {
   
           }
   
+          
+          
           {
   
             type: 'input',
             name: 'employeeRole',
             message: 'Employee Role',
+            
   
   
           }
@@ -228,7 +273,7 @@ const questions (): void  {
             type: 'list',
             name: 'selectEmployee',
             message: 'Select an Employee',
-            choices: pool.query(SELECT first_name, last_name FROM employee)
+            //choices: pool.query(SELECT first_name, last_name FROM employee)
   
           }
   
@@ -305,6 +350,18 @@ const questions (): void  {
 
 
 
+
+// function resolve(resolve: (value: unknown) => void, reject: (reason?: any) => void): void {
+//   throw new Error('Function not implemented.');
+// }
+
+// function reject(err: Error) {
+//   throw new Error('Function not implemented.');
+// }
+
+// function last_name(err: Error, result: QueryResult<any>): void {
+//   throw new Error('Function not implemented.');
+// }
 // Hardcoded query: DELETE FROM course_names WHERE id = 3;
 // pool.query(`DELETE FROM course_names WHERE id = $1`, [3], (err: Error, result: QueryResult) => {
 //   if (err) {
