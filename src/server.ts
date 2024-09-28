@@ -36,7 +36,7 @@ async function fetchManager() {
 
 //need function to handle fetching employee
 async function fetchEmployees() {
-  
+
   const result = await pool.query('SELECT * FROM employee')
   return result.rows;
 }
@@ -135,12 +135,26 @@ async function main() {
           type: 'input',
           name: 'firstName',
           message: 'Enter Employee First Name',
+          validate: (firstName) => {
+            if (!firstName) {
+              return 'Please provide first name'
+            }
+            return true;
+          }
         },
 
         {
           type: 'input',
           name: 'lastName',
           message: 'Enter Employee Last Name',
+          validate: (lastName) => {
+            if (!lastName) {
+              return 'Please provide last name'
+            }
+            return true;
+          }
+
+
         },
 
         {
@@ -157,10 +171,12 @@ async function main() {
           type: 'list',
           name: 'employeeManager',
           message: 'Select Employee Manager',
-          choices: (await fetchManager()).map(manager => ({
+          choices: [{name: "None", value: null}, ...(await fetchManager()).map(manager => ({
             name: `${manager.first_name} ${manager.last_name}`,
             value: manager.id,
           })),
+        ],
+
         },
 
       ]);
@@ -203,8 +219,8 @@ async function main() {
       console.log(`Employee ${updatedEmployee.firstName}${updatedEmployee.lastName} updated`);
       break;
 
-      case 'Quit':
-        process.exit(); 
+    case 'Quit':
+      process.exit();
 
 
 
@@ -216,7 +232,7 @@ async function main() {
 
 
 
-    }
+  }
 }
 
 main()
