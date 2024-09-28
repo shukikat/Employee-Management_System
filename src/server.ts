@@ -35,7 +35,7 @@ async function fetchRoles () {
 
 //creating function to make allow for dynamic list for selecting Manager
 async function fetchManager () {
-   const result= await pool.query('SELECT manager_id FROM employee');
+   const result= await pool.query('SELECT e.id, e.first_name, e.last_name, r.title AS role_name, m.first_name AS manager_first_name,m.last_name AS manager_last_name FROM employee e LEFT JOIN role r ON e.role_id=r.id LEFT JOIN employee m ON e.manager_id=m.id' );
    return result.rows; 
 }
 
@@ -124,12 +124,15 @@ const {choices}=await inquirer.prompt([
       ]);
 
       //updates roles table with new department 
-      await pool.query('INSERT INTO roles (name, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salary, department]); 
+      await pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salary, department]); 
       console.log(`Role ${newRoleName} added`); 
       break; 
 
+      //having some issues--1.  User chooses to add employees 2. Prompt to enter first name 
+        //3.Prompt to enter last name 4. Role (needs to be a list of roles) 5. Manager (need to be list of employees)
+        //6. add salary 7. RESULTS: table needs update Employee table --Q: how do I get manager id to update
       case 'Add an Employee':
-      const { firstName, lastName, employeeRole, employeeManager, salary }=await inquirer.prompt([
+      const { firstName, lastName, employeeRole, employeeManager, }=await inquirer.prompt([
 
         {
           type: 'input',
@@ -156,36 +159,58 @@ const {choices}=await inquirer.prompt([
         {
           type:'list', 
           name: 'employeeManager',
-          message: 'Select Employee Manager'
-          choices: (await fetchManagers()).map(manager=> ({
+          message: 'Select Employee Manager',
+          choices: (await fetchManager()).map(manager=> ({
             name: `${manager.first_name} ${manager.last_name}`, 
             value: manager.id, 
           })),
         }, 
 
-        {
-          type: 'input',
-          name: 'empSalary', 
-          message:'Enter Employee Salary'
-        }, 
-
-      await pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id, salary) VALUES ($1, $2, $3, $4, $5)', [firstName, lastName, employeeRole, employeesManager, empSalary]); 
+      ]);
+      await pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', [firstName, lastName, employeeRole, employeeManager]); 
       console.log(`Employee ${firstName}${lastName} added`); 
       break; 
 
-      ]);
+      //case to update role for selected employee
 
-      case 'Update an Enployee';
-      const {employee, updateRole }=await inquiry.prompt ([
-
-        type: 'list'
-        name: 'employeeToUpdate'
-        message: 'Select Employee to Update'
+      case 'Update an Employee':
+      const {employeeToUpdate, updatedRole }=await inquirer.prompt ([
+       {
+        type: 'list',
+        name: 'employeeToUpdate',
+        message: 'Select Employee to Update',
         choices: (await fetchEmployees()).map(employee=> ({
-          name: employee.name,
+          name: `${employee.first_name} ${employee.last_name}`,
           value:employee.id, 
         })), 
-      ])
+      }
+
+      {
+        type: 'list',
+        name: 'updatedRole', 
+        message:'Select Employee Role',
+        choices: (await fetchRoles()).map(role=>({
+          name: role.title,
+          value: role.id, 
+        
+        })),
+
+      },
+
+
+
+      ]);
+
+      await pool.query('UPDATE employee SET role_id=$1 WHERE id=$2', [updatedRole, employeeToUpdate]); 
+      const updatedEmployee=await fetchEmployees().find(emp=>emp.id===employeeToUpdate);
+      console.log(`Employee ${updatedEmployee.firstName}${updatedEmployee.lastName} updated`); 
+      break; 
+
+
+
+
+      
+      
 
     
 
