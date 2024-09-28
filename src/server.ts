@@ -39,6 +39,11 @@ async function fetchManager () {
    return result.rows; 
 }
 
+//need function to handle fetching employee
+async function fetchEmployees () {
+  const result=await pool.query('SELECT * FROM employee')
+  return result.rows; 
+}
 function handleError (err) {
   console.error('Database query error', err);
 }
@@ -168,263 +173,46 @@ const {choices}=await inquirer.prompt([
       console.log(`Employee ${firstName}${lastName} added`); 
       break; 
 
+      ]);
+
+      case 'Update an Enployee';
+      const {employee, updateRole }=await inquiry.prompt ([
+
+        type: 'list'
+        name: 'employeeToUpdate'
+        message: 'Select Employee to Update'
+        choices: (await fetchEmployees()).map(employee=> ({
+          name: employee.name,
+          value:employee.id, 
+        })), 
       ])
-
-
-  
-    }
-
-
-
-  
-
-  
-  
-
-
-  if (answers.choices === 'Add a Department') {
-
-    inquirer
-      .prompt([
-
-        {
-          type: 'input',
-          name: 'newDepartment',
-          message: 'Add Name of Department',
-
-        }
-
-      ])
-
-
-    pool.query(`INSERT INTO department (id, name) VALUES $(answers.newDepartment`), (err: Error, result: QueryResult) => {
-      if (err) {
-        console.log(err);
-      }
-
-      else {
-        console.log(`${result.rows}`);
-
-      }
-    }
-
-  }
-
-//updates row table
-  if (answers.choices === 'Add a Role') {
-
-    
-
-    inquirer
-      .prompt([
-
-        {
-          type: 'input',
-          name: 'newRoleName',
-          message: 'Name of Role',
-
-        }
-
-
-
-        {
-
-          type: 'input',
-          name: 'salary',
-          message: 'Salary for Role',
-
-
-        }
-
-        //this needs to be a list of choices from department table
-
-        departmentList().then(department) => {
-        {
-
-          type: 'list',
-          name: 'Department',
-          message: 'Department for Role',
-          choices: department.map(department)=> {
-            return {
-              name:department.name,
-              value:department.id,
-            }
-        }
-
-
-        }
-
-      }
-
-
-
-
-      
-
-    }
 
     
 
 
-    pool.query(`INSERT INTO role (id, name, salary, department) VALUES $(answers.newRoleName, answers.salary, answers.department`), (err: Error, result: QueryResult) => {
-      if (err) {
-        console.log(err);
-      }
-
-      else {
-        console.log(`${result.rows}`);
-
-      }
-    }
-
-  
-
-    if (answers.choices === 'Add an Employee') {
-
-      inquirer
-        .prompt([
-  
-          {
-            type: 'input',
-            name: 'firstName',
-            message: 'Employees First Name',
-  
-          }
-  
-  
-  
-          {
-  
-            type: 'input',
-            name: 'lastName',
-            message: 'Employee Last Name',
-  
-  
-          }
-  
-          
-          
-          
-          employeeRole().then(roles) => {
-          
-          {
-  
-            type: 'list',
-            name: 'employeeRole',
-            message: 'Employee Role',
-            choices: roles.map(role)=> {
-              return {
-                name: role.name, 
-                value: role.id, 
-              };
-  
-              }
-            }
-  
-  
-          }
-
-        }
-
-        employeeManager().then(managers)=> {
-          {
-  
-            type: 'list',
-            name: 'employeesManager',
-            message: 'Employee Manager',
-            choices: managers.map(manager)=> {
-              return {
-              name: manager.name, 
-              value: id,
-              }
-            }
-  
-          }
-
-        }
-  
-  
-  
-  
-        ])
-  
-  
-      pool.query(`INSERT INTO employee (id, firstname, last_name, role, employee manager) VALUES $(answers.firstName, answers.lastName, answers.employeeRole, answers.employeeManager`), (err: Error, result: QueryResult) => {
-        if (err) {
-          console.log(err);
-        }
-  
-        else {
-          console.log(`${result.rows}`);
-  
-        }
-      }
   
     }
-  
-  //need to present list of choices from employee table for choices--after selection 
-    if (answers.choices === 'Update an Employee Role') {
-  
-      inquirer
-        .prompt([
-  
-          {
-            type: 'list',
-            name: 'selectEmployee',
-            message: 'Select an Employee',
-            //choices: pool.query(SELECT first_name, last_name FROM employee)
-  
-          }
-  
-  
-  
-          {
-  
-            type: 'input',
-            name: 'salary',
-            message: 'Salary for Role',
-  
-  
-          }
-  
-          {
-  
-            type: 'input',
-            name: 'Department',
-            message: 'Department for Role',
-  
-  
-          }
-  
-  
-  
-  
-        ])
-  
-  
-      pool.query(`INSERT INTO department (id, name) VALUES $(answers.newDepartment`), (err: Error, result: QueryResult) => {
-        if (err) {
-          console.log(err);
-        }
-  
-        else {
-          console.log(`${result.rows}`);
-  
-        }
-      }
+
+
+
   
 
-  }
+  
+  
 
 
 
 
 
 
+  
 
+   
+  
+  
 
-
-}
+ 
+     
 
 
 
@@ -435,10 +223,6 @@ const {choices}=await inquirer.prompt([
 
 
 
-  // });
-
-
-}
 
 
 
