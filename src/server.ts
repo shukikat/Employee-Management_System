@@ -108,19 +108,19 @@ async function main() {
     //pulls up departments table
     case 'View All Departments':
       const departments = await fetchDepartments();
-      console.log(departments);
+      console.table(departments);
       break;
 
 
     //pulls up all results from row table
     case 'View All Roles':
       const roles = await fetchRoles();
-      console.log(roles);
+      console.table(roles);
       break;
 
     case 'View All Employee':
       const employees = await pool.query('SELECT * FROM employee');
-      console.log(employees.rows);
+      console.table(employees.rows);
       break;
 
     case 'Add a Department':
@@ -166,8 +166,14 @@ async function main() {
       ]);
 
       //updates roles table with new department 
-      await pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salary, department]);
+      try {
+      const salaryNumber=parseFloat(salary);
+      await pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salaryNumber, department]);
       console.log(`Role ${newRoleName} added`);
+      }
+      catch(error) {
+        console.error('Error adding role:', error);
+      }
       break;
 
     //having some issues--1.  User chooses to add employees 2. Prompt to enter first name 
@@ -273,14 +279,19 @@ async function main() {
 
 
 
-
+      
 
 
 
   }
+
+  main()
+  
 }
 
 main()
+
+
 
 
 
