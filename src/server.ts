@@ -15,33 +15,78 @@ app.use(express.json());
 
 //create this function to use as depts as dynamic list
 async function fetchDepartments() {
+  try {
   const result = await pool.query('SELECT * FROM department');
   return result.rows;
+  } catch (err: unknown){
+    if (err instanceof Error){
+    handleError(err);}
+    else {
+      console.error('An Unknown error occurred', err);
+    }
+    return[];
+  }
 
 
 }
 
 //need to add role function to be able to add to dynamic list to select role
 async function fetchRoles() {
+  try {
   const queryResult = await pool.query('SELECT * FROM role');
   return queryResult.rows;
+  } catch(err:unknown){
+    if (err instanceof Error){
+      handleError(err);
+    }
+    else {
+      console.error('An Unknown error', err)
+    }
+    return[];
+  }
+
 }
 
 
 //creating function to make allow for dynamic list for selecting Manager/need to 
+//needed to add error handling 
 async function fetchManager() {
+  try {
   const result = await pool.query('SELECT e.id, e.first_name, e.last_name, r.title AS role_name, m.first_name AS manager_first_name,m.last_name AS manager_last_name FROM employee e LEFT JOIN role r ON e.role_id=r.id LEFT JOIN employee m ON e.manager_id=m.id');
   return result.rows;
+  }
+
+  catch(err:unknown){
+    if (err instanceof Error){
+      handleError(err);
+    }
+    else {
+      console.error('An unknown error has occurred', err)
+    }
+    return [];
+  }
 }
 
 //need function to handle fetching employee
 async function fetchEmployees() {
   
+  try { 
   const result = await pool.query('SELECT * FROM employee')
   return result.rows;
+  }
+
+  catch(err:unknown) {
+    if (err instanceof Error){
+      handleError(err);
+    }
+    else {
+      console.error('An unknown error occurred', err)
+    }
+  }
+  return [];
 }
 
-function handleError(err: Error) {
+function handleError(err: unknown) {
   console.error('Database query error', err);
 }
 
@@ -111,7 +156,7 @@ async function main() {
           type: 'list',
           name: 'department',
           message: 'Select Department for Role',
-          choices: (await fetchDepartments()).map(dept => ({
+          choices: (await fetchDepartments() || []).map(dept => ({
             name: dept.name,
             value: dept.id,
 
@@ -135,19 +180,33 @@ async function main() {
           type: 'input',
           name: 'firstName',
           message: 'Enter Employee First Name',
+          validate: (firstName) => {
+            if (!firstName) {
+              return 'Please provide first name'
+            }
+            return true;
+          }
         },
 
         {
           type: 'input',
           name: 'lastName',
           message: 'Enter Employee Last Name',
+          validate: (lastName) => {
+            if (!lastName) {
+              return 'Please provide last name'
+            }
+            return true;
+          }
+
+
         },
 
         {
           type: 'list',
           name: 'employeeRole',
           message: 'Select Employee Role',
-          choices: (await fetchRoles()).map(role => ({
+          choices: (await fetchRoles() || []).map(role => ({
             name: role.name,
             value: role.id,
           })),
@@ -157,10 +216,12 @@ async function main() {
           type: 'list',
           name: 'employeeManager',
           message: 'Select Employee Manager',
-          choices: (await fetchManager()).map(manager => ({
+          choices: [{name: "None", value: null}, ...(await fetchManager()).map(manager => ({
             name: `${manager.first_name} ${manager.last_name}`,
             value: manager.id,
           })),
+        ],
+
         },
 
       ]);
@@ -203,8 +264,8 @@ async function main() {
       console.log(`Employee ${updatedEmployee.firstName}${updatedEmployee.lastName} updated`);
       break;
 
-      case 'Quit':
-        process.exit(); 
+    case 'Quit':
+      process.exit();
 
 
 
@@ -216,7 +277,7 @@ async function main() {
 
 
 
-    }
+  }
 }
 
 main()
