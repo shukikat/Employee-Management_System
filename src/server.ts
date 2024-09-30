@@ -72,7 +72,7 @@ async function fetchManager() {
 async function fetchEmployees() {
 
   try {
-    const result = await pool.query('SELECT * FROM employee')
+    const result = await pool.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title AS job_title, department.name AS department_name, role.salary, CONCAT(manager.first_name, ' ' , manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id=role.id LEFT JOIN department ON role.department_id=department.id LEFT JOIN employee AS manager ON employee.manager_id=manager.id`)
     return result.rows;
   }
 
@@ -121,8 +121,8 @@ async function main() {
       break;
 
     case 'View All Employees':
-      const employees = await pool.query('SELECT * FROM employee');
-      console.table(employees.rows);
+      const employees = await fetchEmployees();
+      console.table(employees);
       break;
 
     case 'Add A Department':
