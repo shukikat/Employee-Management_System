@@ -16,15 +16,16 @@ app.use(express.json());
 //create this function to use as depts as dynamic list
 async function fetchDepartments() {
   try {
-  const result = await pool.query('SELECT * FROM department');
-  return result.rows;
-  } catch (err: unknown){
-    if (err instanceof Error){
-    handleError(err);}
+    const result = await pool.query('SELECT * FROM department');
+    return result.rows;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      handleError(err);
+    }
     else {
       console.error('An Unknown error occurred', err);
     }
-    return[];
+    return [];
   }
 
 
@@ -33,16 +34,16 @@ async function fetchDepartments() {
 //need to add role function to be able to add to dynamic list to select role
 async function fetchRoles() {
   try {
-  const queryResult = await pool.query('SELECT * FROM role');
-  return queryResult.rows;
-  } catch(err:unknown){
-    if (err instanceof Error){
+    const queryResult = await pool.query('SELECT role.id, role.title, role.salary, department.name FROM role INNER JOIN department on department.id=role.department_id');
+    return queryResult.rows;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
       handleError(err);
     }
     else {
       console.error('An Unknown error', err)
     }
-    return[];
+    return [];
   }
 
 }
@@ -52,12 +53,12 @@ async function fetchRoles() {
 //needed to add error handling 
 async function fetchManager() {
   try {
-  const result = await pool.query('SELECT e.id, e.first_name, e.last_name, r.title AS role_name, m.first_name AS manager_first_name,m.last_name AS manager_last_name FROM employee e LEFT JOIN role r ON e.role_id=r.id LEFT JOIN employee m ON e.manager_id=m.id');
-  return result.rows;
+    const result = await pool.query('SELECT e.id, e.first_name, e.last_name, r.title AS role_name, m.first_name AS manager_first_name,m.last_name AS manager_last_name FROM employee e LEFT JOIN role r ON e.role_id=r.id LEFT JOIN employee m ON e.manager_id=m.id');
+    return result.rows;
   }
 
-  catch(err:unknown){
-    if (err instanceof Error){
+  catch (err: unknown) {
+    if (err instanceof Error) {
       handleError(err);
     }
     else {
@@ -68,15 +69,16 @@ async function fetchManager() {
 }
 
 //need function to handle fetching employee
+//updated query to reflect department, role and manager names via multiple joins b/w employee, role, department, and self
 async function fetchEmployees() {
-  
-  try { 
-  const result = await pool.query('SELECT * FROM employee')
-  return result.rows;
+
+  try {
+    const result = await pool.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title AS job_title, department.name AS department_name, role.salary, CONCAT(manager.first_name, ' ' , manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id=role.id LEFT JOIN department ON role.department_id=department.id LEFT JOIN employee AS manager ON employee.manager_id=manager.id`)
+    return result.rows;
   }
 
-  catch(err:unknown) {
-    if (err instanceof Error){
+  catch (err: unknown) {
+    if (err instanceof Error) {
       handleError(err);
     }
     else {
@@ -90,6 +92,7 @@ function handleError(err: unknown) {
   console.error('Database query error', err);
 }
 
+//function to handle inquirer prompts
 async function main() {
   const { choices } = await inquirer.prompt([
 
@@ -97,7 +100,7 @@ async function main() {
       type: 'list',
       name: 'choices',
       message: 'What would you like to do?',
-      choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee Role", "Quit"]
+      choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee", "Quit"]
 
     },
 
@@ -108,22 +111,22 @@ async function main() {
     //pulls up departments table
     case 'View All Departments':
       const departments = await fetchDepartments();
-      console.log(departments);
+      console.table(departments);
       break;
 
 
     //pulls up all results from row table
     case 'View All Roles':
       const roles = await fetchRoles();
-      console.log(roles);
+      console.table(roles);
       break;
 
-    case 'View All Employee':
-      const employees = await pool.query('SELECT * FROM employee');
-      console.log(employees.rows);
+    case 'View All Employees':
+      const employees = await fetchEmployees();
+      console.table(employees);
       break;
 
-    case 'Add a Department':
+    case 'Add A Department':
       const { newDepartment } = await inquirer.prompt([
         {
           type: 'input',
@@ -132,12 +135,14 @@ async function main() {
         },
       ]);
 
+
+
       await pool.query('INSERT INTO department (name) VALUES ($1)', [newDepartment]);
       console.log(`Department ${newDepartment} added.`);
       break;
 
     //logic to handle when user selects to add a new role
-    case 'Add a Role':
+    case 'Add A Role':
       const { newRoleName, salary, department } = await inquirer.prompt([
         {
           type: 'input',
@@ -166,14 +171,20 @@ async function main() {
       ]);
 
       //updates roles table with new department 
-      await pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salary, department]);
-      console.log(`Role ${newRoleName} added`);
+      try {
+        const salaryNumber = parseFloat(salary);
+        await pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [newRoleName, salaryNumber, department]);
+        console.log(`Role ${newRoleName} added`);
+      }
+      catch (error) {
+        console.error('Error adding role:', error);
+      }
       break;
 
     //having some issues--1.  User chooses to add employees 2. Prompt to enter first name 
     //3.Prompt to enter last name 4. Role (needs to be a list of roles) 5. Manager (need to be list of employees)
     //6. add salary 7. RESULTS: table needs update Employee table --Q: how do I get manager id to update
-    case 'Add an Employee':
+    case 'Add An Employee':
       const { firstName, lastName, employeeRole, employeeManager, } = await inquirer.prompt([
 
         {
@@ -207,7 +218,7 @@ async function main() {
           name: 'employeeRole',
           message: 'Select Employee Role',
           choices: (await fetchRoles() || []).map(role => ({
-            name: role.name,
+            name: role.title,
             value: role.id,
           })),
         },
@@ -216,11 +227,11 @@ async function main() {
           type: 'list',
           name: 'employeeManager',
           message: 'Select Employee Manager',
-          choices: [{name: "None", value: null}, ...(await fetchManager()).map(manager => ({
+          choices: [{ name: "None", value: null }, ...(await fetchManager()).map(manager => ({
             name: `${manager.first_name} ${manager.last_name}`,
             value: manager.id,
           })),
-        ],
+          ],
 
         },
 
@@ -261,7 +272,7 @@ async function main() {
 
       await pool.query('UPDATE employee SET role_id=$1 WHERE id=$2', [updatedRole, employeeToUpdate]);
       const updatedEmployee = await (await fetchEmployees()).find(emp => emp.id === employeeToUpdate);
-      console.log(`Employee ${updatedEmployee.firstName}${updatedEmployee.lastName} updated`);
+      console.log(`Employee ${updatedEmployee.first_name} ${updatedEmployee.last_name} was updated`);
       break;
 
     case 'Quit':
@@ -278,9 +289,14 @@ async function main() {
 
 
   }
+
+  main()
+
 }
 
 main()
+
+
 
 
 
