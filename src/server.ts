@@ -218,7 +218,7 @@ async function main() {
           name: 'employeeRole',
           message: 'Select Employee Role',
           choices: (await fetchRoles() || []).map(role => ({
-            name: role.name,
+            name: role.title,
             value: role.id,
           })),
         },
