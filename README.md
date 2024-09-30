@@ -26,7 +26,7 @@ To run this project:
 * Follow the prompts presented by the application. 
 * Select action "Quit" to close the application.  
 
-[Demo of Employee Management-app]() 
+[Demo of Employee Management-app](https://drive.google.com/file/d/1B4awth-d8CeUPpKpAC6As0F1C2XCaf1h/view) 
 
 ## License
 
@@ -38,7 +38,7 @@ I received assistance from the Xpert Learning Assistant tool available through m
 
  This repository is available to the public. Please feel free to clone this repository, submit a pull request, and add any issues. You can contact me via github or email!
 
-* [Link to Employee-Management repository]()
+* [Link to Employee-Management repository](https://github.com/shukikat/Employee-Management_System)
 
 * [My Email](mailto:kathuriashuki@gmail.com)
 
