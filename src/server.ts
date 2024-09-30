@@ -69,6 +69,7 @@ async function fetchManager() {
 }
 
 //need function to handle fetching employee
+//updated query to reflect department, role and manager names via multiple joins b/w employee, role, department, and self
 async function fetchEmployees() {
 
   try {
@@ -99,7 +100,7 @@ async function main() {
       type: 'list',
       name: 'choices',
       message: 'What would you like to do?',
-      choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee Role", "Quit"]
+      choices: ['View All Departments', 'View All Roles', 'View All Employees', "Add A Department", "Add A Role", "Add An Employee", "Update an Employee", "Quit"]
 
     },
 
@@ -271,7 +272,7 @@ async function main() {
 
       await pool.query('UPDATE employee SET role_id=$1 WHERE id=$2', [updatedRole, employeeToUpdate]);
       const updatedEmployee = await (await fetchEmployees()).find(emp => emp.id === employeeToUpdate);
-      console.log(`Employee ${updatedEmployee.firstName}${updatedEmployee.lastName} updated`);
+      console.log(`Employee ${updatedEmployee.first_name} ${updatedEmployee.last_name} was updated`);
       break;
 
     case 'Quit':
